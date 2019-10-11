@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-SCRIPT=`readlink -f $0`
-SCRIPTPATH=`dirname $SCRIPT`
-PROJECTROOT=`readlink -f $SCRIPTPATH/..`
+PROJECTROOT="$(pwd)"
 FILENAME="pgdump-aws-lambda.zip"
 
 command_exists () {
@@ -28,7 +26,9 @@ cp -r * $BUNDLE_DIR/
 echo "running npm prune.."
 cd $BUNDLE_DIR
 # prune dev-dependancies from node_modules
-npm prune --production >> /dev/null
+cp $PROJECTROOT/.nvmrc ./
+npm install --production
+
 
 rm -rf dist coverage test
 
