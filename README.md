@@ -66,9 +66,12 @@ To decrypt these dumps, use the command:
 
 ## Loading your own `pg_dump` binary
 1. `docker run -v ~/<local-folder>:/home/user/<local-folder-name> -it amazonlinux /bin/bash`
-2. Install the following packahes from `https://download.postgresql.org/pub/repos/yum/<version>/redhat/rhel-<version>-x86_64/`
-    1. `postgresql11-libs.x86_64 0:11.2-1PGDG.rhel7`
-    2. `postgresql11.x86_64 0:11.2-1PGDG.rhel7`
-3. Copy `pg_dump` from `bin/pg_dump` to `/home/user/<local-folder-name>`
-4. Copy `libpq.so.5` from `/usr/pgsql-11/lib/libpq.so.5` to `/home/user/<local-folder-name>`
-5. Add both files to project
+2. Download the source files from `https://ftp.postgresql.org/pub/source/<version>/postgresql-<version>.tar.gz`
+3. tar zxvf postgresql-<version>.tar.gz
+4. cd postgresql-<version>
+5. `./configure --without-readline`
+6. `make`
+7. `make install`
+8. Copy `pg_dump` from `bin/pg_dump` to `/home/user/<local-folder-name>`
+9. Copy `libpq.so.5` from `/usr/pgsql-11/lib/libpq.so.5.<x>` to `/home/user/<local-folder-name>`
+10. Add both files to project
