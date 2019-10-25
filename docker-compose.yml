@@ -1,0 +1,29 @@
+version: "3.7"
+services:
+  app: &app_base
+    image: pgdump
+    build:
+      context: .
+      args:
+        - NODE_ENV=development
+        - PG_VERSION=11.4
+    hostname: pgdump
+    env_file:
+      - .env.local
+    volumes:
+      - .:/var/task
+      - node_modules_folder:/var/task/node_modules
+      - postgres_folder:/var/task/bin/postgres-11.4
+
+  builder:
+    <<: *app_base
+    build:
+      context: .
+      args:
+        - PG_VERSION=11.4
+      target: builder
+    command: bin/makezip.sh
+
+volumes:
+  node_modules_folder:
+  postgres_folder:

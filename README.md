@@ -33,6 +33,22 @@ Note: you can test the lambda function using the "Test" button and providing con
 
 **AWS lambda has a 5 minute maximum execution time for lambda functions, so your backup must take less time that that.**
 
+## Development
+To build the dev environment create a `.env.local` with the appropriate values, use `.env` as a template.
+1. build the image
+    ```shell script
+    $ docker-compose build
+    ```
+2. Run the image
+    ```shell script
+    $ EVENT=$(echo '<json>' | jq -c)
+    $ docker-compose run app index.handler $EVENT
+    ```
+3. Build zip for deployment
+    ```shell script
+    $ docker-compose run builder
+    ```
+    A file called `pgdump-aws-lambda.zip` should have appeared under `dist/`.
 ## File Naming
 
 This function will store your backup with the following s3 key:
@@ -41,7 +57,7 @@ s3://${S3_BUCKET}${ROOT}/YYYY-MM-DD/YYYY-MM-DD@HH-mm-ss.backup
 
 ## PostgreSQL version compatibility
 
-This script uses the pg_dump utility from PostgreSQL 11.2.
+This script uses the pg_dump utility from PostgreSQL 11.4.
 
 It should be able to dump older versions of PostgreSQL. I will try to keep the included  binaries in sync with the latest from postgresql.org, but PR or message me if there is a newer PostgreSQL binary available.
 
@@ -63,15 +79,3 @@ Example config:
 
 To decrypt these dumps, use the command:
 `openssl aes-256-ctr -d -in ./encrypted-db.backup  -nosalt -out unencrypted.backup`
-
-## Loading your own `pg_dump` binary
-1. `docker run -v ~/<local-folder>:/home/user/<local-folder-name> -it amazonlinux /bin/bash`
-2. Download the source files from `https://ftp.postgresql.org/pub/source/<version>/postgresql-<version>.tar.gz`
-3. tar zxvf postgresql-<version>.tar.gz
-4. cd postgresql-<version>
-5. `./configure --without-readline`
-6. `make`
-7. `make install`
-8. Copy `pg_dump` from `bin/pg_dump` to `/home/user/<local-folder-name>`
-9. Copy `libpq.so.5` from `/usr/pgsql-11/lib/libpq.so.5.<x>` to `/home/user/<local-folder-name>`
-10. Add both files to project
