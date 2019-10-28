@@ -1,81 +1,35 @@
 # pgdump-aws-lambda
 based off of [jameshy/pgdump-aws-lambda](https://github.com/jameshy/pgdump-aws-lambda)
 
-# Overview
+# Development
 
-An AWS Lambda function that runs pg_dump and streams the output to s3.
+This repo has a companion Docker image that makes it easier to develop and test the lambda locally with the peace of mind that will work on AWS lambda service. It also allows you to create a bundle to be uploaded to AWS lambda service.
 
-It can be configured to run periodically using CloudWatch events.
+### Pre-requirements:
 
-## Quick start
+- Have Docker installed on your machine (for more instructions follow: [https://docs.docker.com/docker-for-mac/install/](https://docs.docker.com/docker-for-mac/install/))
+- Create a environment variables file on the root of the project named `.env.local` and populated using `.env` as a template.
 
-1. Create an AWS lambda function:
-    - Runtime: Node.js 10.16.3
-    - Configuration -> Advanced Settings
-        - Timeout = 5 minutes
-        - Select a VPC and security group (must be suitable for connecting to the target database server)
-2. Create a CloudWatch rule:
-    - Event Source: Fixed rate of 1 hour
-    - Targets: Lambda Function (the one created in step #1)
-    - Configure input -> Constant (JSON text) and paste your config, e.g.:
-    ```json
-    {
-        "PGDATABASE": "oxandcart",
-        "PGUSER": "staging",
-        "PGPASSWORD": "uBXKFecSKu7hyNu4",
-        "PGHOST": "database.com",
-        "S3_BUCKET" : "my-db-backups",
-        "ROOT": "hourly-backups"
-    }
-    ```
+## Run the function locally
 
-Note: you can test the lambda function using the "Test" button and providing config like above.
-
-**AWS lambda has a 5 minute maximum execution time for lambda functions, so your backup must take less time that that.**
-
-## Development
-To build the dev environment create a `.env.local` with the appropriate values, use `.env` as a template.
-1. build the image
-    ```shell script
     $ docker-compose build
-    ```
-2. Run the image
-    ```shell script
-    $ EVENT=$(echo '<json>' | jq -c)
+    $ EVENT='{"PGDATABASE":"<database>","PGUSER":"<user>","PGPASSWORD":"<password>","PGHOST":"<host>","S3_BUCKET":"<s3_bucket>","ROOT":"<s3_root_path>","EXCLUDE_TABLES": ["table_1", "table_2"]}'
     $ docker-compose run app index.handler $EVENT
-    ```
-3. Build zip for deployment
-    ```shell script
-    $ docker-compose run builder
-    ```
-    A file called `pgdump-aws-lambda.zip` should have appeared under `dist/`.
-## File Naming
+**NOTE:** `EXCLUDE_TABLES` is optional.
+## Upgrade (or downgrade) the version of PostgreSQL
 
-This function will store your backup with the following s3 key:
+As of 25 Oct 2019, it is set to use PostgreSQL 11.4. If you need to upgrade it follow these steps:
 
-s3://${S3_BUCKET}${ROOT}/YYYY-MM-DD/YYYY-MM-DD@HH-mm-ss.backup
+1. Change the `PG_VERSION` and `postgres_folder` values on `docker-compose.yml`
+2. Change the folder location (`PGDUMP_PATH`) under `lib/config.js`
+3. Run `docker-compose build`
 
-## PostgreSQL version compatibility
+# Deploy Process
 
-This script uses the pg_dump utility from PostgreSQL 11.4.
+1. Run the builder container (this step assumes you have already ran `docker-compose build`)
 
-It should be able to dump older versions of PostgreSQL. I will try to keep the included  binaries in sync with the latest from postgresql.org, but PR or message me if there is a newer PostgreSQL binary available.
+        $ docker-compose run builder
 
-## Encryption
-
-You can pass the config option 'ENCRYPTION_PASSWORD' and the backup will be encrypted using aes-256-ctr algorithm.
-
-Example config:
-```json
-{
-    "PGDATABASE": "dbname",
-    "PGUSER": "postgres",
-    "PGPASSWORD": "password",
-    "PGHOST": "localhost",
-    "S3_BUCKET" : "my-db-backups",
-    "ENCRYPTION_PASSWORD": "my-secret-password"
-}
-```
-
-To decrypt these dumps, use the command:
-`openssl aes-256-ctr -d -in ./encrypted-db.backup  -nosalt -out unencrypted.backup`
+2. Deploy the `[pgdump-aws-lambda.zip](http://pgdump-aws-lambda.zip)` that is located under `dist` on the desired lambda function.
+    1. Through the AWS console navigate to the lambda function > click the upload button and select the .zip file described above > click save
+    2. More automated processes will come shortly
