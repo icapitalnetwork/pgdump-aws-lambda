@@ -17,6 +17,7 @@ services:
 
   builder:
     <<: *app_base
+    image: pgdump-builder
     build:
       context: .
       args:

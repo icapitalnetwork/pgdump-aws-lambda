@@ -35,7 +35,7 @@ RUN cp /usr/local/pgsql/lib/libpq.so.5.* $INSTALL_PATH/bin/postgres-${PG_VERSION
 #
 # Stage final
 #
-FROM lambci/lambda:nodejs10.x AS final
+FROM lambci/lambda:nodejs10.x
 
 ARG NODE_ENV=production
 
